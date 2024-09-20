@@ -13,6 +13,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY backend/ .
 
+# Copy the frontend build files
+COPY frontend/build/ ./static/
+
 # Expose the port that the app runs on
 EXPOSE $PORT
 
