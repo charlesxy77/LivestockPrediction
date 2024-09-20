@@ -6,6 +6,7 @@ import logging
 import numpy as np
 import torch
 import torch.nn as nn
+import boto3
 
 app = Flask(__name__, static_folder='../frontend/build')
 CORS(app)
@@ -34,14 +35,17 @@ model = None
 def load_model():
     global model
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(current_dir, 'LiveStock_model.pkl')
-        logger.info(f"Looking for model file at: {model_path}")
+        s3 = boto3.client('s3',
+                          aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
+                          aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY'])
+        bucket_name = os.environ['S3_BUCKET_NAME']
+        model_key = 'LiveStock_model.pkl'
         
-        with open(model_path, 'rb') as f:
-            model = pickle.load(f)
+        response = s3.get_object(Bucket=bucket_name, Key=model_key)
+        model_str = response['Body'].read()
+        model = pickle.loads(model_str)
         
-        logger.info("Model loaded successfully")
+        logger.info("Model loaded successfully from S3")
     except Exception as e:
         logger.error(f"Failed to load the model: {str(e)}")
         raise
