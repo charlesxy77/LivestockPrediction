@@ -32,7 +32,6 @@ pyvenv.cfg
 
 # Frontend
 node_modules/
-build/
 
 # Logs
 npm-debug.log*
