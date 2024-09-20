@@ -19,7 +19,7 @@ const App = () => {
   };
 
   useEffect(() => {
-    axios.get('http://localhost:5000/test')
+    axios.get('https://livestockprediction-4.onrender.com/test')
       .then(response => console.log('Backend connection successful:', response.data))
       .catch(error => console.error('Backend connection failed:', error));
   }, []);
@@ -32,7 +32,7 @@ const App = () => {
     e.preventDefault();
     setError(null);
     try {
-      const response = await axios.post('http://localhost:5000/predict', inputs);
+      const response = await axios.post('https://livestockprediction-4.onrender.com/predict', inputs);
       setOutputs(response.data);
     } catch (error) {
       console.error('Error:', error);

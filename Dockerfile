@@ -1,5 +1,5 @@
-# Use an official Python runtime as the base image
-FROM python:3.12-slim
+# Use a more stable Python version
+FROM python:3.9-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -7,8 +7,8 @@ WORKDIR /app
 # Copy the requirements file into the container
 COPY backend/requirements.txt .
 
-# Install the required packages
-RUN pip install --no-cache-dir -r requirements.txt
+# Install the required packages with verbose output
+RUN pip install --no-cache-dir -v -r requirements.txt
 
 # Copy the rest of the application code into the container
 COPY backend/ .

@@ -34,18 +34,31 @@ model = None
 def load_model():
     global model
     try:
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        model_path = os.path.join(current_dir, 'LiveStock_model.pkl')
-        logger.info(f"Looking for model file at: {model_path}")
-        
-        with open(model_path, 'rb') as f:
-            model = pickle.load(f)
+        # List of possible locations for the model file
+        possible_locations = [
+            os.path.join(os.getcwd(), 'LiveStock_model.pkl'),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'LiveStock_model.pkl'),
+            '/app/LiveStock_model.pkl',  
+        ]
 
-        model.to('cpu')
-        logger.info("Model loaded successfully")
+        for model_path in possible_locations:
+            logger.info(f"Trying to load model from: {model_path}")
+            if os.path.exists(model_path):
+                with open(model_path, 'rb') as f:
+                    model = pickle.load(f)
+                model.to('cpu')
+                logger.info(f"Model loaded successfully from {model_path}")
+                return
+
+        raise FileNotFoundError("Model file not found in any of the expected locations")
+
     except Exception as e:
         logger.error(f"Failed to load the model: {str(e)}")
         raise
+
+
+load_model()
+    
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
@@ -80,6 +93,11 @@ def predict():
 @app.route('/api/test', methods=['GET'])
 def test():
     return jsonify({"message": "Backend is running!"}), 200
+
+
+@app.route('/api/health', methods=['GET'])
+def health():
+    return jsonify({"message": "Success!"}), 200
 
 # Serve React App
 @app.route('/', defaults={'path': ''})
