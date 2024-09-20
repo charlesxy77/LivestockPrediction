@@ -1,14 +1,14 @@
 import os
 import pickle
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import logging
 import numpy as np
 import torch
 import torch.nn as nn
 
-app = Flask(__name__)
-CORS(app, resources={r"/predict": {"origins": "*"}})
+app = Flask(__name__, static_folder='../frontend/build')
+CORS(app)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,10 +46,8 @@ def load_model():
         logger.error(f"Failed to load the model: {str(e)}")
         raise
 
-@app.route('/predict', methods=['POST', 'OPTIONS'])
+@app.route('/api/predict', methods=['POST'])
 def predict():
-    if request.method == 'OPTIONS':
-        return '', 204
     if model is None:
         return jsonify({"error": "Model not loaded"}), 500
     
@@ -78,9 +76,18 @@ def predict():
         logger.error(f"Error during prediction: {str(e)}")
         return jsonify({"error": str(e)}), 400
 
-@app.route('/test', methods=['GET'])
+@app.route('/api/test', methods=['GET'])
 def test():
     return jsonify({"message": "Backend is running!"}), 200
+
+# Serve React App
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
 
 if __name__ == '__main__':
     try:
