@@ -31,7 +31,7 @@ pyvenv.cfg
 # *.joblib
 
 # Frontend
-node_modules/
+/frontend/node_modules/
 
 # Logs
 npm-debug.log*
