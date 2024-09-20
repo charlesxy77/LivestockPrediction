@@ -1,6 +1,9 @@
 Flask==3.0.3
 Flask-Cors==5.0.0
-numpy==2.1.1
-torch==1.10.0+cpu
+numpy==1.21.0
+torch==2.0.0+cpu
+torchvision==0.15.1+cpu
+torchaudio==2.0.1+cpu
+-f https://download.pytorch.org/whl/cpu/torch_stable.html
 gunicorn==20.1.0
 boto3==1.18.44
