@@ -1,10 +1,11 @@
 import os
-import torch
 import pickle
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import logging
-from multi_output_model import MultiOutputModel
+import numpy as np
+import torch
+import torch.nn as nn
 
 app = Flask(__name__)
 CORS(app, resources={r"/predict": {"origins": "*"}})
@@ -12,32 +13,33 @@ CORS(app, resources={r"/predict": {"origins": "*"}})
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+class MultiOutputModel(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(MultiOutputModel, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.fc3 = nn.Linear(hidden_size, output_size)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        out = self.fc1(x)
+        out = self.relu(out)
+        out = self.fc2(out)
+        out = self.relu(out)
+        out = self.fc3(out)
+        return out
+
 model = None
 
 def load_model():
     global model
     try:
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        logger.info(f"Current directory: {current_dir}")
-        pth_path = os.path.join(current_dir, 'LiveStock_model.pth')
-        logger.info(f"Looking for .pth file at: {pth_path}")
-        pkl_path = os.path.join(current_dir, 'LiveStock_model.pkl')
-        logger.info(f"Looking for .pkl file at: {pkl_path}")
+        model_path = os.path.join(current_dir, 'LiveStock_model.pkl')
+        logger.info(f"Looking for model file at: {model_path}")
         
-        if os.path.exists(pth_path):
-            logger.info("Found .pth file. Loading PyTorch model.")
-            input_size = 7
-            hidden_size = 64
-            output_size = 4
-            model = MultiOutputModel(input_size, hidden_size, output_size)
-            model.load_state_dict(torch.load(pth_path))
-            model.eval()
-        elif os.path.exists(pkl_path):
-            logger.info("Found .pkl file. Loading pickled model.")
-            with open(pkl_path, 'rb') as f:
-                model = pickle.load(f)
-        else:
-            raise FileNotFoundError(f"No model file found at {pth_path} or {pkl_path}")
+        with open(model_path, 'rb') as f:
+            model = pickle.load(f)
         
         logger.info("Model loaded successfully")
     except Exception as e:
@@ -55,14 +57,14 @@ def predict():
         data = request.json
         logger.info(f"Received data: {data}")
         
-        # Convert input data to a format suitable for your model
+        # Convert input data to a PyTorch tensor
         input_data = torch.tensor([float(data[key]) for key in ['DM', 'CP', 'CF', 'NDF', 'ADF', 'ADL', 'ASH']], dtype=torch.float32)
         
         # Make prediction
         with torch.no_grad():
-            prediction = model(input_data)
+            prediction = model(input_data).numpy()
         
-        # Convert prediction to list and round to 2 decimal places
+        # Convert prediction to dictionary and round to 2 decimal places
         result = {
             "DMD": round(prediction[0].item(), 2),
             "OMD": round(prediction[1].item(), 2),
